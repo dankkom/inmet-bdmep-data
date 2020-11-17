@@ -1,3 +1,5 @@
+# Python
 __pycache__
-/.vscode
 Pipfile.lock
+*.egg-info
+/.vscode

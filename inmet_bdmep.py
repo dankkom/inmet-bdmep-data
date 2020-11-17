@@ -1,7 +1,12 @@
 
 
+__version__ = "0.0.1"
+
+
 import csv
 import datetime
+import io
+import os
 import pathlib
 import re
 import zipfile
@@ -16,10 +21,12 @@ from tqdm import tqdm
 # DOWNLOAD
 def download_year(
     year: int,
-    destpath: Union[pathlib.PurePath, str],
+    destpath: Union[str, os.PathLike],
     blocksize: int = 2048,
 ) -> None:
     # Reference https://stackoverflow.com/a/37573701
+    if isinstance(destpath, str):
+        destpath = pathlib.Path(destpath)
     filename = f"{year}.zip"
     url = f"https://portal.inmet.gov.br/uploads/dadoshistoricos/{filename}"
     r = requests.get(url, stream=True)
@@ -40,19 +47,6 @@ def download_year(
 
 
 # READ
-def unzip(
-    filepath: Union[pathlib.PurePath, str],
-    destdirpath: Union[pathlib.PurePath, str] = ".",
-) -> None:
-    with zipfile.ZipFile(filepath) as zf:
-        infolist = zf.infolist()
-        for info in infolist:
-            if info.is_dir():
-                continue
-            info.filename = pathlib.Path(info.filename).parts[-1]
-            zf.extract(info, pathlib.Path(destdirpath))
-
-
 def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(
         columns={
@@ -82,35 +76,39 @@ def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def read_metadata(filepath: Union[pathlib.PurePath, str]) -> Dict[str, str]:
-    with open(filepath, "r", encoding="latin-1") as f:
-        reader = csv.reader(f, delimiter=";")
-        _, regiao = next(reader)
-        _, uf = next(reader)
-        _, estacao = next(reader)
-        _, codigo_wmo = next(reader)
-        _, latitude = next(reader)
-        try:
-            latitude = float(latitude.replace(",", "."))
-        except:
-            latitude = np.nan
-        _, longitude = next(reader)
-        try:
-            longitude = float(longitude.replace(",", "."))
-        except:
-            longitude = np.nan
-        _, altitude = next(reader)
-        try:
-            altitude = float(altitude.replace(",", "."))
-        except:
-            altitude = np.nan
-        _, data_fundacao = next(reader)
-        if re.match("[0-9]{4}-[0-9]{2}-[0-9]{2}", data_fundacao):
-            data_fundacao = datetime.datetime.strptime(
-                data_fundacao, "%Y-%m-%d")
-        elif re.match("[0-9]{2}/[0-9]{2}/[0-9]{2}", data_fundacao):
-            data_fundacao = datetime.datetime.strptime(
-                data_fundacao, "%d/%m/%y")
+def read_metadata(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) -> Dict[str, str]:
+    if isinstance(filepath, zipfile.ZipExtFile):
+        f = io.TextIOWrapper(filepath)
+    else:
+        f = open(filepath, "r", encoding="latin-1")
+    reader = csv.reader(f, delimiter=";")
+    _, regiao = next(reader)
+    _, uf = next(reader)
+    _, estacao = next(reader)
+    _, codigo_wmo = next(reader)
+    _, latitude = next(reader)
+    try:
+        latitude = float(latitude.replace(",", "."))
+    except:
+        latitude = np.nan
+    _, longitude = next(reader)
+    try:
+        longitude = float(longitude.replace(",", "."))
+    except:
+        longitude = np.nan
+    _, altitude = next(reader)
+    try:
+        altitude = float(altitude.replace(",", "."))
+    except:
+        altitude = np.nan
+    _, data_fundacao = next(reader)
+    if re.match("[0-9]{4}-[0-9]{2}-[0-9]{2}", data_fundacao):
+        data_fundacao = datetime.datetime.strptime(
+            data_fundacao, "%Y-%m-%d")
+    elif re.match("[0-9]{2}/[0-9]{2}/[0-9]{2}", data_fundacao):
+        data_fundacao = datetime.datetime.strptime(
+            data_fundacao, "%d/%m/%y")
+    f.close()
     return {
         "regiao": regiao,
         "uf": uf,
@@ -123,7 +121,7 @@ def read_metadata(filepath: Union[pathlib.PurePath, str]) -> Dict[str, str]:
     }
 
 
-def read_data(filepath: Union[pathlib.PurePath, str]) -> pd.DataFrame:
+def read_data(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) -> pd.DataFrame:
     d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
                     encoding="latin-1", skiprows=8, usecols=range(19))
     d = rename_columns(d)
@@ -134,46 +132,36 @@ def read_data(filepath: Union[pathlib.PurePath, str]) -> pd.DataFrame:
     return d
 
 
-def read(filepath: Union[pathlib.PurePath, str]) -> pd.DataFrame:
-    data = read_data(filepath)
-    metadata = read_metadata(filepath)
-    data = data.assign(codigo_wmo=metadata["codigo_wmo"])
-    empty_rows = data[
-        [
-            "precipitacao",
-            "pressao_atmosferica",
-            "pressao_atmosferica_maxima",
-            "pressao_atmosferica_minima",
-            "radiacao",
-            "temperatura_ar",
-            "temperatura_orvalho",
-            "temperatura_maxima",
-            "temperatura_minima",
-            "temperatura_orvalho_maxima",
-            "temperatura_orvalho_minima",
-            "umidade_relativa_maxima",
-            "umidade_relativa_minima",
-            "umidade_relativa",
-            "vento_direcao",
-            "vento_rajada_maxima",
-            "vento_velocidade",
-        ]
-    ].isnull().all(axis=1)
-    data = data.loc[~empty_rows]
-    return data
-
-
-def get_estacoes_metadata(dirpath):
-    codigos = {}
-    for file in pathlib.Path(dirpath).glob("**/*"):
-        if file.is_dir():
-            continue
-        print(file)
-        metadata = read.read_metadata(file)
-        if metadata["codigo_wmo"] not in codigos:
-            codigos[metadata["codigo_wmo"]] = {}
-        codigos.update({metadata["codigo_wmo"]: metadata})
-    return pd.DataFrame.from_records(
-        codigos.values(),
-        index=range(len(codigos))
-    )
+def read_zipfile(filepath: Union[str, bytes, os.PathLike]) -> pd.DataFrame:
+    df = pd.DataFrame()
+    with zipfile.ZipFile(filepath) as z:
+        for zf in z.infolist():
+            if zf.is_dir():
+                continue
+            d = read_data(z.open(zf.filename))
+            meta = read_metadata(z.open(zf.filename))
+            d = d.assign(**meta)
+            empty_rows = d[
+                [
+                    "precipitacao",
+                    "pressao_atmosferica",
+                    "pressao_atmosferica_maxima",
+                    "pressao_atmosferica_minima",
+                    "radiacao",
+                    "temperatura_ar",
+                    "temperatura_orvalho",
+                    "temperatura_maxima",
+                    "temperatura_minima",
+                    "temperatura_orvalho_maxima",
+                    "temperatura_orvalho_minima",
+                    "umidade_relativa_maxima",
+                    "umidade_relativa_minima",
+                    "umidade_relativa",
+                    "vento_direcao",
+                    "vento_rajada_maxima",
+                    "vento_velocidade",
+                ]
+            ].isnull().all(axis=1)
+            d = d.loc[~empty_rows]
+            df = pd.concat((df, d), ignore_index=True)
+    return df
