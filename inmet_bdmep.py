@@ -17,11 +17,14 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
+Filepath = Union[str, pathlib.Path, os.PathLike]
+FilepathZip = Union[Filepath, zipfile.ZipExtFile]
+
 
 # DOWNLOAD
 def download_year(
     year: int,
-    destpath: Union[str, os.PathLike],
+    destpath: Filepath,
     blocksize: int = 2048,
 ) -> None:
     # Reference https://stackoverflow.com/a/37573701
@@ -76,7 +79,7 @@ def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def read_metadata(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) -> Dict[str, str]:
+def read_metadata(filepath: FilepathZip) -> Dict[str, str]:
     if isinstance(filepath, zipfile.ZipExtFile):
         f = io.TextIOWrapper(filepath)
     else:
@@ -121,7 +124,7 @@ def read_metadata(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) 
     }
 
 
-def read_data(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) -> pd.DataFrame:
+def read_data(filepath: FilepathZip) -> pd.DataFrame:
     d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
                     encoding="latin-1", skiprows=8, usecols=range(19))
     d = rename_columns(d)
@@ -132,7 +135,7 @@ def read_data(filepath: Union[str, bytes, os.PathLike, zipfile.ZipExtFile]) -> p
     return d
 
 
-def read_zipfile(filepath: Union[str, bytes, os.PathLike]) -> pd.DataFrame:
+def read_zipfile(filepath: Filepath) -> pd.DataFrame:
     df = pd.DataFrame()
     with zipfile.ZipFile(filepath) as z:
         for zf in z.infolist():
