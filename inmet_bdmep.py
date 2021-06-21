@@ -168,3 +168,36 @@ def read_zipfile(filepath: Filepath) -> pd.DataFrame:
             d = d.loc[~empty_rows]
             df = pd.concat((df, d), ignore_index=True)
     return df
+
+
+def _date_partition(df: pd.DataFrame, level: str = "month") -> pd.DataFrame:
+    for year in df["data_hora"].dt.year.unique():
+        df_year = df.loc[df["data_hora"].dt.year == year, :]
+        if level == "year":
+            yield df_year, year
+            continue
+        for month in df_year["data_hora"].dt.month.unique():
+            df_month = df_year.loc[df["data_hora"].dt.month == month, :]
+            if level == "month":
+                yield df_month, year, month
+                continue
+            for day in df_month["data_hora"].dt.month.unique():
+                df_day = df_month.loc[df["data_hora"].dt.day == day, :]
+                yield df_day, year, month, day
+
+
+def write_csv_zip(df: pd.DataFrame, dirpath: Filepath) -> None:
+    """Write date partitioned CSV/ZIP files in the `dirpath` directory."""
+    if isinstance(dirpath, str):
+        dirpath = pathlib.Path(dirpath)
+    for df_month, year, month in _date_partition(df, level="month"):
+        filename = f"{year:04}-{month:02}.csv"
+        df_month.to_csv(
+            dirpath / (filename + ".zip"),
+            compression={
+                "method": "zip",
+                "archive_name": filename,
+            },
+            encoding="utf-8",
+            index=False,
+        )
