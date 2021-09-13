@@ -50,33 +50,46 @@ def download_year(
 
 
 # READ
-def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
-    return df.rename(
-        columns={
-            "DATA (YYYY-MM-DD)": "data",
-            "Data": "data",
-            "HORA (UTC)": "hora",
-            "Hora UTC": "hora",
-            "PRECIPITAÇÃO TOTAL, HORÁRIO (mm)": "precipitacao",
-            "PRESSAO ATMOSFERICA AO NIVEL DA ESTACAO, HORARIA (mB)": "pressao_atmosferica",
-            "PRESSÃO ATMOSFERICA MAX.NA HORA ANT. (AUT) (mB)": "pressao_atmosferica_maxima",
-            "PRESSÃO ATMOSFERICA MIN. NA HORA ANT. (AUT) (mB)": "pressao_atmosferica_minima",
-            "RADIACAO GLOBAL (KJ/m²)": "radiacao",
-            "RADIACAO GLOBAL (Kj/m²)": "radiacao",
-            "TEMPERATURA DO AR - BULBO SECO, HORARIA (°C)": "temperatura_ar",
-            "TEMPERATURA DO PONTO DE ORVALHO (°C)": "temperatura_orvalho",
-            "TEMPERATURA MÁXIMA NA HORA ANT. (AUT) (°C)": "temperatura_maxima",
-            "TEMPERATURA MÍNIMA NA HORA ANT. (AUT) (°C)": "temperatura_minima",
-            "TEMPERATURA ORVALHO MAX. NA HORA ANT. (AUT) (°C)": "temperatura_orvalho_maxima",
-            "TEMPERATURA ORVALHO MIN. NA HORA ANT. (AUT) (°C)": "temperatura_orvalho_minima",
-            "UMIDADE REL. MAX. NA HORA ANT. (AUT) (%)": "umidade_relativa_maxima",
-            "UMIDADE REL. MIN. NA HORA ANT. (AUT) (%)": "umidade_relativa_minima",
-            "UMIDADE RELATIVA DO AR, HORARIA (%)": "umidade_relativa",
-            "VENTO, DIREÇÃO HORARIA (gr) (° (gr))": "vento_direcao",
-            "VENTO, RAJADA MAXIMA (m/s)": "vento_rajada_maxima",
-            "VENTO, VELOCIDADE HORARIA (m/s)": "vento_velocidade",
-        }
-    )
+def columns_renamer(name):
+    name = name.lower()
+    if re.match(r"data", name):
+        return "data"
+    if re.match(r"hora", name):
+        return "hora"
+    if re.match(r"precipita(ç|c)(ã|a)o", name):
+        return "precipitacao"
+    if re.match(r"press(ã|a)o atmosf(é|e)rica ao n(í|i)vel", name):
+        return "pressao_atmosferica"
+    if re.match(r"press(ã|a)o atmosf(é|e)rica m(á|a)x", name):
+        return "pressao_atmosferica_maxima"
+    if re.match(r"press(ã|a)o atmosf(é|e)rica m(í|i)n", name):
+        return "pressao_atmosferica_minima"
+    if re.match(r"radia(ç|c)(ã|a)o", name):
+        return "radiacao"
+    if re.match(r"temperatura do ar", name):
+        return "temperatura_ar"
+    if re.match(r"temperatura do ponto de orvalho", name):
+        return "temperatura_orvalho"
+    if re.match(r"temperatura m(á|a)x", name):
+        return "temperatura_maxima"
+    if re.match(r"temperatura m(í|i)n", name):
+        return "temperatura_minima"
+    if re.match(r"temperatura orvalho m(á|a)x", name):
+        return "temperatura_orvalho_maxima"
+    if re.match(r"temperatura orvalho m(í|i)n", name):
+        return "temperatura_orvalho_minima"
+    if re.match(r"umidade rel\. m(á|a)x", name):
+        return "umidade_relativa_maxima"
+    if re.match(r"umidade rel\. m(í|i)n", name):
+        return "umidade_relativa_minima"
+    if re.match(r"umidade relativa do ar", name):
+        return "umidade_relativa"
+    if re.match(r"vento, dire(ç|c)(ã|a)o", name):
+        return "vento_direcao"
+    if re.match(r"vento, rajada", name):
+        return "vento_rajada"
+    if re.match(r"vento, velocidade", name):
+        return "vento_velocidade"
 
 
 def read_metadata(filepath: FilepathZip) -> Dict[str, str]:
@@ -124,14 +137,36 @@ def read_metadata(filepath: FilepathZip) -> Dict[str, str]:
     }
 
 
+def convert_dates(s: pd.Series) -> pd.DataFrame:
+    datas = s.str.replace("/", "-").str.split("-", expand=True)
+    datas = datas.rename(columns={0: "ano", 1: "mes", 2: "dia"})
+    datas = datas.apply(lambda x: x.astype(int))
+    return datas
+
+
+def convert_hours(s: pd.Series) -> pd.DataFrame:
+    s = s.apply(
+        lambda x: x if re.match("\d{2}\:\d{2}", x) else x[:2] + ":" + x[2:]
+    )
+    horas = s.str.split(":", expand=True)[[0]]
+    horas = horas.rename(columns={0: "hora"})
+    horas = horas.apply(lambda x: x.astype(int))
+    return horas
+
+
 def read_data(filepath: FilepathZip) -> pd.DataFrame:
     d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
                     encoding="latin-1", skiprows=8, usecols=range(19))
-    d = rename_columns(d)
+    d = d.rename(columns=columns_renamer)
+    datas = convert_dates(d["data"])
+    horas = convert_hours(d["hora"])
     d = d.assign(
-        data_hora=pd.to_datetime(d["data"] + " " + d["hora"]),
+        ano=datas["ano"],
+        mes=datas["mes"],
+        dia=datas["dia"],
+        hora=horas["hora"],
     )
-    d = d.drop(columns=["data", "hora"])
+    d = d.drop(columns=["data"])
     return d
 
 
@@ -144,60 +179,51 @@ def read_zipfile(filepath: Filepath) -> pd.DataFrame:
             d = read_data(z.open(zf.filename))
             meta = read_metadata(z.open(zf.filename))
             d = d.assign(**meta)
-            empty_rows = d[
-                [
-                    "precipitacao",
-                    "pressao_atmosferica",
-                    "pressao_atmosferica_maxima",
-                    "pressao_atmosferica_minima",
-                    "radiacao",
-                    "temperatura_ar",
-                    "temperatura_orvalho",
-                    "temperatura_maxima",
-                    "temperatura_minima",
-                    "temperatura_orvalho_maxima",
-                    "temperatura_orvalho_minima",
-                    "umidade_relativa_maxima",
-                    "umidade_relativa_minima",
-                    "umidade_relativa",
-                    "vento_direcao",
-                    "vento_rajada_maxima",
-                    "vento_velocidade",
-                ]
-            ].isnull().all(axis=1)
+            empty_columns = [
+                "precipitacao",
+                "pressao_atmosferica",
+                "pressao_atmosferica_maxima",
+                "pressao_atmosferica_minima",
+                "radiacao",
+                "temperatura_ar",
+                "temperatura_orvalho",
+                "temperatura_maxima",
+                "temperatura_minima",
+                "temperatura_orvalho_maxima",
+                "temperatura_orvalho_minima",
+                "umidade_relativa_maxima",
+                "umidade_relativa_minima",
+                "umidade_relativa",
+                "vento_direcao",
+                "vento_rajada",
+                "vento_velocidade",
+            ]
+            empty_rows = d[empty_columns].isnull().all(axis=1)
             d = d.loc[~empty_rows]
             df = pd.concat((df, d), ignore_index=True)
     return df
 
 
 def _date_partition(df: pd.DataFrame, level: str = "month") -> pd.DataFrame:
-    for year in df["data_hora"].dt.year.unique():
-        df_year = df.loc[df["data_hora"].dt.year == year, :]
+    for year in df["ano"].unique():
+        df_year = df.loc[df["ano"] == year, :]
         if level == "year":
             yield df_year, year
             continue
-        for month in df_year["data_hora"].dt.month.unique():
-            df_month = df_year.loc[df["data_hora"].dt.month == month, :]
+        for month in df_year["mes"].unique():
+            df_month = df_year.loc[df["mes"] == month, :]
             if level == "month":
                 yield df_month, year, month
                 continue
-            for day in df_month["data_hora"].dt.month.unique():
-                df_day = df_month.loc[df["data_hora"].dt.day == day, :]
+            for day in df_month["dia"].unique():
+                df_day = df_month.loc[df["dia"] == day, :]
                 yield df_day, year, month, day
 
 
-def write_csv_zip(df: pd.DataFrame, dirpath: Filepath) -> None:
-    """Write date partitioned CSV/ZIP files in the `dirpath` directory."""
+def write_parquet(df: pd.DataFrame, dirpath: Filepath) -> None:
+    """Write date partitioned parquet files in the `dirpath` directory."""
     if isinstance(dirpath, str):
         dirpath = pathlib.Path(dirpath)
     for df_month, year, month in _date_partition(df, level="month"):
-        filename = f"{year:04}-{month:02}.csv"
-        df_month.to_csv(
-            dirpath / (filename + ".zip"),
-            compression={
-                "method": "zip",
-                "archive_name": filename,
-            },
-            encoding="utf-8",
-            index=False,
-        )
+        filename = f"{year:04}-{month:02}.parquet"
+        df_month.to_parquet(dirpath / filename)
