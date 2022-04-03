@@ -10,7 +10,4 @@ black = "*"
 inmet-bdmep = {editable = true, path = "."}
 
 [requires]
-python_version = "3.9"
-
-[pipenv]
-allow_prereleases = true
+python_version = "3.10"
