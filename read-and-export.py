@@ -3,7 +3,7 @@ import pathlib
 
 from inmet_bdmep import (
     _date_partition,
-    build_filename,
+    build_processed_filename,
     read_zipfile,
     write_csv,
     write_parquet,
@@ -61,7 +61,7 @@ def main():
     df = read_zipfile(args.filepath)
     for df_part, *leves in _date_partition(df, args.level):
         # Save CSV file for each partition according with the granularity and format
-        filename = build_filename(*leves, file_format=file_format)
+        filename = build_processed_filename(*leves, file_format=file_format)
         filepath = args.output / filename
         print(filepath)
         if file_format == "csv":

@@ -21,10 +21,8 @@ from tqdm import tqdm
 def parse_last_modified(last_modified: str) -> dt.datetime:
     return dt.datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z")
 
-
-def build_filename(year: int, last_modified: dt.datetime) -> str:
+def build_local_filename(year: int, last_modified: dt.datetime) -> str:
     return f"inmet-bdmep_{year}_{last_modified:%Y%m%d}.zip"
-
 
 def build_url(year):
     return f"https://portal.inmet.gov.br/uploads/dadoshistoricos/{year}.zip"
@@ -35,7 +33,7 @@ def download_year(
     destdirpath: pathlib.Path,
     blocksize: int = 2048,
 ) -> None:
-    # Reference https://stackoverflow.com/a/37573701
+
     if not destdirpath.exists():
         destdirpath.mkdir(parents=True)
 
@@ -45,7 +43,7 @@ def download_year(
     last_modified = parse_last_modified(headers["Last-Modified"])
     file_size = int(headers.get("Content-Length", 0))
 
-    destfilename = build_filename(year, last_modified)
+    destfilename = build_local_filename(year, last_modified)
     destfilepath = destdirpath / destfilename
     if destfilepath.exists():
         return
@@ -241,7 +239,7 @@ def _date_partition(df: pd.DataFrame, level: str = "month") -> pd.DataFrame:
                 yield df_day, year, month, day
 
 
-def build_filename(*partitions, file_format="csv") -> str:
+def build_processed_filename(*partitions, file_format="csv") -> str:
     match partitions:
         case [year]:
             filename = f"inmet-bdmep_{year}.{file_format}"
