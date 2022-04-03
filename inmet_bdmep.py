@@ -4,45 +4,62 @@ __version__ = "0.0.2"
 
 
 import csv
-import datetime
+import datetime as dt
 import io
-import os
 import pathlib
 import re
 import zipfile
-from typing import Dict, Union
+from typing import Dict
 
 import numpy as np
 import pandas as pd
 import requests
 from tqdm import tqdm
 
-Filepath = Union[str, pathlib.Path, os.PathLike]
-FilepathZip = Union[Filepath, zipfile.ZipExtFile]
-
 
 # DOWNLOAD
+def parse_last_modified(last_modified: str) -> dt.datetime:
+    return dt.datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z")
+
+
+def build_filename(year: int, last_modified: dt.datetime) -> str:
+    return f"inmet-bdmep_{year}_{last_modified:%Y%m%d}.zip"
+
+
+def build_url(year):
+    return f"https://portal.inmet.gov.br/uploads/dadoshistoricos/{year}.zip"
+
+
 def download_year(
     year: int,
-    destpath: Filepath,
+    destdirpath: pathlib.Path,
     blocksize: int = 2048,
 ) -> None:
     # Reference https://stackoverflow.com/a/37573701
-    if isinstance(destpath, str):
-        destpath = pathlib.Path(destpath)
-    filename = f"{year}.zip"
-    url = f"https://portal.inmet.gov.br/uploads/dadoshistoricos/{filename}"
+    if not destdirpath.exists():
+        destdirpath.mkdir(parents=True)
+
+    url = build_url(year)
+
+    headers = requests.head(url).headers
+    last_modified = parse_last_modified(headers["Last-Modified"])
+    file_size = int(headers.get("Content-Length", 0))
+
+    destfilename = build_filename(year, last_modified)
+    destfilepath = destdirpath / destfilename
+    if destfilepath.exists():
+        return
+
     r = requests.get(url, stream=True)
-    file_size = int(r.headers.get("content-length", 0))
     pbar = tqdm(
-        desc=filename,
+        desc=f"{year}",
         dynamic_ncols=True,
         leave=True,
         total=file_size,
         unit="iB",
         unit_scale=True,
     )
-    with open(destpath / filename, "wb") as f:
+    with open(destfilepath, "wb") as f:
         for data in r.iter_content(blocksize):
             f.write(data)
             pbar.update(len(data))
@@ -92,7 +109,7 @@ def columns_renamer(name):
         return "vento_velocidade"
 
 
-def read_metadata(filepath: FilepathZip) -> Dict[str, str]:
+def read_metadata(filepath: pathlib.Path | zipfile.ZipExtFile) -> Dict[str, str]:
     if isinstance(filepath, zipfile.ZipExtFile):
         f = io.TextIOWrapper(filepath)
     else:
@@ -119,11 +136,15 @@ def read_metadata(filepath: FilepathZip) -> Dict[str, str]:
         altitude = np.nan
     _, data_fundacao = next(reader)
     if re.match("[0-9]{4}-[0-9]{2}-[0-9]{2}", data_fundacao):
-        data_fundacao = datetime.datetime.strptime(
-            data_fundacao, "%Y-%m-%d")
+        data_fundacao = dt.datetime.strptime(
+            data_fundacao,
+            "%Y-%m-%d",
+        )
     elif re.match("[0-9]{2}/[0-9]{2}/[0-9]{2}", data_fundacao):
-        data_fundacao = datetime.datetime.strptime(
-            data_fundacao, "%d/%m/%y")
+        data_fundacao = dt.datetime.strptime(
+            data_fundacao,
+            "%d/%m/%y",
+        )
     f.close()
     return {
         "regiao": regiao,
@@ -154,7 +175,7 @@ def convert_hours(s: pd.Series) -> pd.DataFrame:
     return horas
 
 
-def read_data(filepath: FilepathZip) -> pd.DataFrame:
+def read_data(filepath: pathlib.Path) -> pd.DataFrame:
     d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
                     encoding="latin-1", skiprows=8, usecols=range(19))
     d = d.rename(columns=columns_renamer)
@@ -170,7 +191,7 @@ def read_data(filepath: FilepathZip) -> pd.DataFrame:
     return d
 
 
-def read_zipfile(filepath: Filepath) -> pd.DataFrame:
+def read_zipfile(filepath: pathlib.Path) -> pd.DataFrame:
     df = pd.DataFrame()
     with zipfile.ZipFile(filepath) as z:
         for zf in z.infolist():
@@ -220,10 +241,24 @@ def _date_partition(df: pd.DataFrame, level: str = "month") -> pd.DataFrame:
                 yield df_day, year, month, day
 
 
-def write_parquet(df: pd.DataFrame, dirpath: Filepath) -> None:
-    """Write date partitioned parquet files in the `dirpath` directory."""
-    if isinstance(dirpath, str):
-        dirpath = pathlib.Path(dirpath)
-    for df_month, year, month in _date_partition(df, level="month"):
-        filename = f"{year:04}-{month:02}.parquet"
-        df_month.to_parquet(dirpath / filename)
+def build_filename(*partitions, file_format="csv") -> str:
+    match partitions:
+        case [year]:
+            filename = f"inmet-bdmep_{year}.{file_format}"
+        case [year, month]:
+            filename = f"inmet-bdmep_{year}{month:02}.{file_format}"
+        case [year, month, day]:
+            filename = f"inmet-bdmep_{year}{month:02}{day:02}.{file_format}"
+    return filename
+
+
+def write_csv(df: pd.DataFrame, filepath: pathlib.Path) -> None:
+    if not filepath.parent.exists():
+        filepath.parent.mkdir(parents=True)
+    df.to_csv(filepath, index=False, encoding="utf-8")
+
+
+def write_parquet(df: pd.DataFrame, filepath: pathlib.Path) -> None:
+    if not filepath.parent.exists():
+        filepath.parent.mkdir(parents=True)
+    df.to_parquet(filepath, compression="brotli")
