@@ -9,7 +9,6 @@ python = "^3.10"
 requests = "^2.27.1"
 tqdm = "^4.64.0"
 pandas = "^1.4.2"
-pyarrow = "^8.0.0"
 
 [tool.poetry.dev-dependencies]
 
