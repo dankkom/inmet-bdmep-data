@@ -26,7 +26,9 @@ def get_parser():
         help="Years to download",
     )
     parser.add_argument(
-        "--destdir",
+        "-o",
+        "--output",
+        dest="output",
         type=pathlib.Path,
         required=True,
         help="Destination directory",
@@ -37,7 +39,7 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    destdirpath = args.destdir
+    destdirpath = args.output
     years = expand_years(*args.years)
     for year in years:
         download_year(year, destdirpath)
