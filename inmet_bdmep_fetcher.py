@@ -76,7 +76,6 @@ def cli():
     def get_args():
         parser = argparse.ArgumentParser(
             description="Download INMET BDMEP data",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
         parser.add_argument(
             "years",
@@ -90,7 +89,8 @@ def cli():
             required=True,
             help="Destination directory",
         )
-        return parser
+        args = parser.parse_args()
+        return args
 
     args = get_args()
     datadir = args.datadir
