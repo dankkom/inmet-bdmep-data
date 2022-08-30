@@ -21,8 +21,10 @@ from tqdm import tqdm
 def parse_last_modified(last_modified: str) -> dt.datetime:
     return dt.datetime.strptime(last_modified, "%a, %d %b %Y %H:%M:%S %Z")
 
+
 def build_local_filename(year: int, last_modified: dt.datetime) -> str:
     return f"inmet-bdmep_{year}_{last_modified:%Y%m%d}.zip"
+
 
 def build_url(year):
     return f"https://portal.inmet.gov.br/uploads/dadoshistoricos/{year}.zip"
