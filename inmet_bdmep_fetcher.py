@@ -43,20 +43,20 @@ def download_year(
     if destfilepath.exists():
         return
 
-    r = httpx.get(url, stream=True)
-    pbar = tqdm(
-        desc=f"{year}",
-        dynamic_ncols=True,
-        leave=True,
-        total=file_size,
-        unit="iB",
-        unit_scale=True,
-    )
-    with open(destfilepath, "wb") as f:
-        for data in r.iter_content(blocksize):
-            f.write(data)
-            pbar.update(len(data))
-    pbar.close()
+    with httpx.stream("GET", url) as r:
+        pb = tqdm(
+            desc=f"{year}",
+            dynamic_ncols=True,
+            leave=True,
+            total=file_size,
+            unit="iB",
+            unit_scale=True,
+        )
+        with open(destfilepath, "wb") as f:
+            for data in r.iter_bytes(blocksize):
+                f.write(data)
+                pb.update(len(data))
+        pb.close()
 
 
 def cli():
