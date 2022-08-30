@@ -6,7 +6,7 @@ __version__ = "0.0.3"
 import datetime as dt
 import pathlib
 
-import requests
+import httpx
 from tqdm import tqdm
 
 
@@ -34,7 +34,7 @@ def download_year(
 
     url = build_url(year)
 
-    headers = requests.head(url).headers
+    headers = httpx.head(url).headers
     last_modified = parse_last_modified(headers["Last-Modified"])
     file_size = int(headers.get("Content-Length", 0))
 
@@ -43,7 +43,7 @@ def download_year(
     if destfilepath.exists():
         return
 
-    r = requests.get(url, stream=True)
+    r = httpx.get(url, stream=True)
     pbar = tqdm(
         desc=f"{year}",
         dynamic_ncols=True,
