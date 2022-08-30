@@ -4,14 +4,14 @@ Scripts to download and read INMET's BDMEP data.
 
 Data source: https://portal.inmet.gov.br/dadoshistoricos
 
-## fetch-raw.py: Raw files fetcher
+## fetch.py: Raw files fetcher
 
 Script to fetch raw data files from INMET's BDMEP site.
 
 Usage:
 
 ```
-usage: fetch-raw.py [-h] --destdir DESTDIR years [years ...]
+usage: fetch.py [-h] --destdir DESTDIR years [years ...]
 
 Download INMET BDMEP data
 
