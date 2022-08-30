@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "inmet-bdmep-fetcher"
-version = "0.1.0"
+version = "0.1.0.1"
 description = "Coletor de dados meteorológicos do INMET-BDMEP"
 authors = ["Daniel Komesu <danielkomesu@gmail.com>"]
 

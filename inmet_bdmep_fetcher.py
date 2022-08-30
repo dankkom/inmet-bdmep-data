@@ -1,6 +1,6 @@
 
 
-__version__ = "0.1.0"
+__version__ = "0.1.0.1"
 
 
 import datetime as dt
