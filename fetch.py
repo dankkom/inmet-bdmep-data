@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-from inmet_bdmep import download_year
+from inmet_bdmep_fetcher import download_year
 
 
 def expand_years(*years: str) -> list[int]:
