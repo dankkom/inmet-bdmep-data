@@ -111,7 +111,7 @@ def convert_dates(s: pd.Series) -> pd.DataFrame:
 
 def convert_hours(s: pd.Series) -> pd.DataFrame:
     s = s.apply(
-        lambda x: x if re.match("\d{2}\:\d{2}", x) else x[:2] + ":" + x[2:]
+        lambda x: x if re.match(r"\d{2}\:\d{2}", x) else x[:2] + ":" + x[2:]
     )
     horas = s.str.split(":", expand=True)[[0]]
     horas = horas.rename(columns={0: "hora"})
