@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from inmet_bdmep.fetcher import download_year
 
 
@@ -25,9 +27,10 @@ def cli():
             help="Years to download",
         )
         parser.add_argument(
-            "--datadir",
-            dest="datadir",
-            type=pathlib.Path,
+            "-o",
+            "--data-dir",
+            dest="data_dir",
+            type=Path,
             required=True,
             help="Destination directory",
         )
