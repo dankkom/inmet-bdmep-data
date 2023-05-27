@@ -2,7 +2,4 @@
 __pycache__
 Pipfile.lock
 *.egg-info
-
-poetry.lock
-
-.venv
+.venv/

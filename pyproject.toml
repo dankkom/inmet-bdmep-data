@@ -1,17 +1,17 @@
-[tool.poetry]
+[project]
 name = "inmet-bdmep-fetcher"
 version = "0.2.0"
 description = "Coletor de dados meteorológicos do INMET-BDMEP"
-authors = ["Daniel Komesu <danielkomesu@gmail.com>"]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-tqdm = "*"
-httpx = "*"
-pandas = "*"
-
-[tool.poetry.dev-dependencies]
+authors = [
+    {name = "Daniel Komesu", email="danielkomesu@gmail.com"},
+]
+requires-python = ">=3.10"
+dependencies = [
+    "tqdm",
+    "httpx",
+    "pandas",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
