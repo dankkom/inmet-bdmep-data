@@ -30,7 +30,7 @@ Module to read INMET's BDMEP raw data files.
 Example:
 
 ```python
-from inmet_bdmep_reader import read_zipfile
+from inmet_bdmep.reader import read_zipfile
 
 filepath = "inmet-bdmep_2022_20220712.zip"
 df = read_zipfile(filepath)
