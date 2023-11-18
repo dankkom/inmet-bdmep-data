@@ -11,7 +11,7 @@ Script to fetch raw data files from INMET's BDMEP site.
 Usage:
 
 ```
-usage: run.py [-h] --data-dir DESTDIR years [years ...]
+usage: run.py [-h] -data-dir DESTDIR years [years ...]
 
 Download INMET BDMEP data
 
@@ -20,7 +20,7 @@ positional arguments:
 
 options:
   -h, --help          show this help message and exit
-  --data-dir DESTDIR  Destination directory (default: None)
+  -data-dir DESTDIR  Destination directory (default: None)
 ```
 
 ## reader

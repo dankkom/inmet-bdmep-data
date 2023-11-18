@@ -25,8 +25,7 @@ def get_args():
         help="Years to download",
     )
     parser.add_argument(
-        "-o",
-        "--data-dir",
+        "-data-dir",
         dest="data_dir",
         type=Path,
         required=True,
@@ -38,10 +37,10 @@ def get_args():
 
 def main():
     args = get_args()
-    datadir = args.datadir
+    data_dir = args.data_dir
     years = expand_years(*args.years)
     for year in years:
-        download_year(year, datadir)
+        download_year(year, data_dir)
 
 
 if __name__ == "__main__":
