@@ -11,7 +11,7 @@ Script to fetch raw data files from INMET's BDMEP site.
 Usage:
 
 ```
-usage: fetch.py [-h] --data-dir DESTDIR years [years ...]
+usage: run.py [-h] --data-dir DESTDIR years [years ...]
 
 Download INMET BDMEP data
 
