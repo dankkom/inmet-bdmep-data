@@ -136,6 +136,7 @@ def read_data(filepath: Path) -> pd.DataFrame:
 
 
 def read_zipfile(filepath: Path) -> pd.DataFrame:
+    data = pd.DataFrame()
     with zipfile.ZipFile(filepath) as z:
         files = [zf for zf in z.infolist() if not zf.is_dir()]
         for zf in tqdm(files):
@@ -163,4 +164,5 @@ def read_zipfile(filepath: Path) -> pd.DataFrame:
             ]
             empty_rows = d[empty_columns].isnull().all(axis=1)
             d = d.loc[~empty_rows]
-            yield d
+            data = pd.concat((data, d), ignore_index=True)
+    return data
