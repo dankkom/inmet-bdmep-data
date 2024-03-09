@@ -25,7 +25,7 @@ def get_args():
         help="Years to download",
     )
     parser.add_argument(
-        "-data-dir",
+        "--data-dir",
         dest="data_dir",
         type=Path,
         required=True,

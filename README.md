@@ -1,6 +1,6 @@
 # INMET BDMEP data
 
-Scripts to download and read INMET's BDMEP data.
+Python package to download and read INMET's BDMEP data.
 
 Data source: https://portal.inmet.gov.br/dadoshistoricos
 
@@ -11,7 +11,7 @@ Script to fetch raw data files from INMET's BDMEP site.
 Usage:
 
 ```
-usage: run.py [-h] -data-dir DESTDIR years [years ...]
+usage: fetch.py [-h] -data-dir DESTDIR years [years ...]
 
 Download INMET BDMEP data
 
@@ -20,7 +20,7 @@ positional arguments:
 
 options:
   -h, --help          show this help message and exit
-  -data-dir DESTDIR  Destination directory (default: None)
+  --data-dir DESTDIR  Destination directory (default: None)
 ```
 
 ## reader
