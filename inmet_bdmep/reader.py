@@ -102,36 +102,39 @@ def read_metadata(filepath: Path | zipfile.ZipExtFile) -> dict[str, str]:
     }
 
 
-def convert_dates(s: pd.Series) -> pd.DataFrame:
-    datas = s.str.replace("/", "-").str.split("-", expand=True)
-    datas = datas.rename(columns={0: "ano", 1: "mes", 2: "dia"})
-    datas = datas.apply(lambda x: x.astype(int))
-    return datas
+def convert_dates(dates: pd.Series) -> pd.DataFrame:
+    dates = dates.str.replace("/", "-")
+    return dates
 
 
-def convert_hours(s: pd.Series) -> pd.DataFrame:
-    s = s.apply(
-        lambda x: x if re.match(r"\d{2}\:\d{2}", x) else x[:2] + ":" + x[2:]
+def convert_hours(hours: pd.Series) -> pd.DataFrame:
+
+    def fix_hour_string(hour: str) -> str:
+        if re.match(r"^\d{2}\:\d{2}$", hour):
+            return hour
+        else:
+            return hour[:2] + ":00"
+
+    hours = hours.apply(fix_hour_string)
+    return hours
+
+
+def parse_datetime(d: pd.DataFrame) -> pd.DataFrame:
+    d = d.assign(
+        data_hora=convert_dates(d["data"]) + " " + convert_hours(d["hora"]),
     )
-    horas = s.str.split(":", expand=True)[[0]]
-    horas = horas.rename(columns={0: "hora"})
-    horas = horas.apply(lambda x: x.astype(int))
-    return horas
+    d = d.assign(
+        data_hora=pd.to_datetime(d["data_hora"], format="%Y-%m-%d %H:%M"),
+    )
+    return d
 
 
 def read_data(filepath: Path) -> pd.DataFrame:
     d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
                     encoding="latin-1", skiprows=8, usecols=range(19))
     d = d.rename(columns=columns_renamer)
-    datas = convert_dates(d["data"])
-    horas = convert_hours(d["hora"])
-    d = d.assign(
-        ano=datas["ano"],
-        mes=datas["mes"],
-        dia=datas["dia"],
-        hora=horas["hora"],
-    )
-    d = d.drop(columns=["data"])
+    d = parse_datetime(d)
+    d = d.drop(columns=["data", "hora"])
     return d
 
 
