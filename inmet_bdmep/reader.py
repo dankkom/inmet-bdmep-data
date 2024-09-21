@@ -130,8 +130,15 @@ def parse_datetime(d: pd.DataFrame) -> pd.DataFrame:
 
 
 def read_data(filepath: Path) -> pd.DataFrame:
-    d = pd.read_csv(filepath, sep=";", decimal=",", na_values="-9999",
-                    encoding="latin-1", skiprows=8, usecols=range(19))
+    d = pd.read_csv(
+        filepath,
+        sep=";",
+        decimal=",",
+        na_values="-9999",
+        encoding="latin-1",
+        skiprows=8,
+        usecols=range(19),
+    )
     d = d.rename(columns=columns_renamer)
     d = parse_datetime(d)
     d = d.drop(columns=["data", "hora"])

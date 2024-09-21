@@ -1,5 +1,5 @@
 import datetime as dt
-import pathlib
+from pathlib import Path
 
 import httpx
 from tqdm import tqdm
@@ -20,7 +20,7 @@ def build_url(year):
 
 def download_year(
     year: int,
-    destdirpath: pathlib.Path,
+    destdirpath: Path,
     blocksize: int = 2048,
 ) -> None:
 
