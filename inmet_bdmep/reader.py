@@ -119,13 +119,14 @@ def convert_hours(hours: pd.Series) -> pd.DataFrame:
     return hours
 
 
-def parse_datetime(d: pd.DataFrame) -> pd.DataFrame:
+def fix_data_hora(d: pd.DataFrame) -> pd.DataFrame:
     d = d.assign(
-        data_hora=convert_dates(d["data"]) + " " + convert_hours(d["hora"]),
+        data_hora=pd.to_datetime(
+            convert_dates(d["data"]) + " " + convert_hours(d["hora"]),
+            format="%Y-%m-%d %H:%M",
+        ),
     )
-    d = d.assign(
-        data_hora=pd.to_datetime(d["data_hora"], format="%Y-%m-%d %H:%M"),
-    )
+    d = d.drop(columns=["data", "hora"])
     return d
 
 
@@ -140,8 +141,32 @@ def read_data(filepath: Path) -> pd.DataFrame:
         usecols=range(19),
     )
     d = d.rename(columns=columns_renamer)
-    d = parse_datetime(d)
-    d = d.drop(columns=["data", "hora"])
+
+    # Remove empty rows
+    empty_columns = [
+        "precipitacao",
+        "pressao_atmosferica",
+        "pressao_atmosferica_maxima",
+        "pressao_atmosferica_minima",
+        "radiacao",
+        "temperatura_ar",
+        "temperatura_orvalho",
+        "temperatura_maxima",
+        "temperatura_minima",
+        "temperatura_orvalho_maxima",
+        "temperatura_orvalho_minima",
+        "umidade_relativa_maxima",
+        "umidade_relativa_minima",
+        "umidade_relativa",
+        "vento_direcao",
+        "vento_rajada",
+        "vento_velocidade",
+    ]
+    empty_rows = d[empty_columns].isnull().all(axis=1)
+    d = d.loc[~empty_rows]
+
+    d = fix_data_hora(d)
+
     return d
 
 
@@ -153,26 +178,5 @@ def read_zipfile(filepath: Path) -> pd.DataFrame:
             d = read_data(z.open(zf.filename))
             meta = read_metadata(z.open(zf.filename))
             d = d.assign(**meta)
-            empty_columns = [
-                "precipitacao",
-                "pressao_atmosferica",
-                "pressao_atmosferica_maxima",
-                "pressao_atmosferica_minima",
-                "radiacao",
-                "temperatura_ar",
-                "temperatura_orvalho",
-                "temperatura_maxima",
-                "temperatura_minima",
-                "temperatura_orvalho_maxima",
-                "temperatura_orvalho_minima",
-                "umidade_relativa_maxima",
-                "umidade_relativa_minima",
-                "umidade_relativa",
-                "vento_direcao",
-                "vento_rajada",
-                "vento_velocidade",
-            ]
-            empty_rows = d[empty_columns].isnull().all(axis=1)
-            d = d.loc[~empty_rows]
             data = pd.concat((data, d), ignore_index=True)
     return data
