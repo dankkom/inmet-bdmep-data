@@ -17,35 +17,35 @@ def columns_renamer(name: str) -> str:
         return "data"
     if re.match(r"hora", name):
         return "hora"
-    if re.match(r"precipita(ç|c)(ã|a)o", name):
+    if re.match(r"precipita[çc][ãa]o", name):
         return "precipitacao"
-    if re.match(r"press(ã|a)o atmosf(é|e)rica ao n(í|i)vel", name):
+    if re.match(r"press[ãa]o atmosf[ée]rica ao n[íi]vel", name):
         return "pressao_atmosferica"
-    if re.match(r"press(ã|a)o atmosf(é|e)rica m(á|a)x", name):
+    if re.match(r"press[ãa]o atmosf[ée]rica m[áa]x", name):
         return "pressao_atmosferica_maxima"
-    if re.match(r"press(ã|a)o atmosf(é|e)rica m(í|i)n", name):
+    if re.match(r"press[ãa]o atmosf[ée]rica m[íi]n", name):
         return "pressao_atmosferica_minima"
-    if re.match(r"radia(ç|c)(ã|a)o", name):
+    if re.match(r"radia[çc][ãa]o", name):
         return "radiacao"
     if re.match(r"temperatura do ar", name):
         return "temperatura_ar"
     if re.match(r"temperatura do ponto de orvalho", name):
         return "temperatura_orvalho"
-    if re.match(r"temperatura m(á|a)x", name):
+    if re.match(r"temperatura m[áa]x", name):
         return "temperatura_maxima"
-    if re.match(r"temperatura m(í|i)n", name):
+    if re.match(r"temperatura m[íi]n", name):
         return "temperatura_minima"
-    if re.match(r"temperatura orvalho m(á|a)x", name):
+    if re.match(r"temperatura orvalho m[áa]x", name):
         return "temperatura_orvalho_maxima"
-    if re.match(r"temperatura orvalho m(í|i)n", name):
+    if re.match(r"temperatura orvalho m[íi]n", name):
         return "temperatura_orvalho_minima"
-    if re.match(r"umidade rel\. m(á|a)x", name):
+    if re.match(r"umidade rel\. m[áa]x", name):
         return "umidade_relativa_maxima"
-    if re.match(r"umidade rel\. m(í|i)n", name):
+    if re.match(r"umidade rel\. m[íi]n", name):
         return "umidade_relativa_minima"
     if re.match(r"umidade relativa do ar", name):
         return "umidade_relativa"
-    if re.match(r"vento, dire(ç|c)(ã|a)o", name):
+    if re.match(r"vento, dire[çc][ãa]o", name):
         return "vento_direcao"
     if re.match(r"vento, rajada", name):
         return "vento_rajada"
