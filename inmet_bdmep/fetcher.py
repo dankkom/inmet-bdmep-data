@@ -35,7 +35,7 @@ def download_year(
 
     destfilename = build_local_filename(year, last_modified)
     destfilepath = destdirpath / destfilename
-    if destfilepath.exists():
+    if destfilepath.exists() and destfilepath.stat().st_size == file_size:
         return
 
     with httpx.stream("GET", url) as r:
