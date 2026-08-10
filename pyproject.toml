@@ -30,6 +30,10 @@ classifiers = [
 ]
 dependencies = [
     "quantilica-core>=0.4.0",
+]
+
+[project.optional-dependencies]
+analysis = [
     "quantilica-analytics>=0.2.0",
 ]
 
