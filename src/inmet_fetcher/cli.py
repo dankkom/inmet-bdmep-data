@@ -6,6 +6,11 @@ from .plugin import app
 
 
 def main(argv: list[str] | None = None) -> None:
+    """Run the standalone CLI for inmet-fetcher.
+
+    Args:
+        argv: Optional list of command-line arguments to parse. Defaults to sys.argv.
+    """
     if argv is not None:
         sys.argv = [sys.argv[0]] + argv
     try:

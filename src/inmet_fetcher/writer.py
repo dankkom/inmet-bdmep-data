@@ -18,6 +18,17 @@ def write_to_parquet(
     manifest: DownloadManifest | None = None,
     compression: str = "zstd",
 ) -> Path:
+    """Write DataFrame to Parquet file applying the BDMEP schema contract.
+
+    Args:
+        df: The Polars DataFrame to write.
+        output_path: The destination path for the Parquet file.
+        manifest: Optional download manifest to attach as metadata.
+        compression: The compression algorithm to use. Defaults to "zstd".
+
+    Returns:
+        The Path to the written Parquet file.
+    """
     casted = BDMEP_CONTRACT.cast(df)
     return to_parquet(
         casted,

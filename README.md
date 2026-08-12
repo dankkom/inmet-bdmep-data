@@ -1,8 +1,10 @@
-# inmet-fetcher: Dados meteorológicos históricos do INMET
+# inmet-fetcher
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square) ![Python](https://img.shields.io/badge/python-3.12+-blue.svg?style=flat-square)
 
-O **inmet-fetcher** é uma ferramenta para desenvolvedores, cientistas e analistas de dados que precisam acessar o **BDMEP (Banco de Dados Meteorológicos para Ensino e Pesquisa)** do INMET. Automatiza o download de arquivos ZIP por ano, trata codificações `latin-1`, limpa cabeçalhos inconsistentes e padroniza nomes de colunas em snake_case.
+O **inmet-fetcher** é um pacote do ecossistema Quantilica para acessar dados históricos do **BDMEP (Banco de Dados Meteorológicos para Ensino e Pesquisa)** do INMET. Automatiza o download de arquivos ZIP por ano, trata codificações, limpa cabeçalhos e padroniza dados em formato estruturado.
+
+> 📚 **Documentação Completa:** Consulte a documentação oficial do ecossistema em [https://docs.quantilica.com](https://docs.quantilica.com).
 
 ---
 

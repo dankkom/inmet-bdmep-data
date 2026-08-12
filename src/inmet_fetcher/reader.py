@@ -89,6 +89,14 @@ def _parse_float(s: str) -> float | None:
 
 
 def read_metadata(f) -> dict:
+    """Read and parse metadata from a station CSV file.
+
+    Args:
+        f: A file-like object containing the CSV data.
+
+    Returns:
+        A dictionary containing the parsed metadata.
+    """
     if isinstance(f, zipfile.ZipExtFile):
         wrapper = io.TextIOWrapper(f, encoding="latin-1")
     else:
@@ -121,6 +129,14 @@ def read_metadata(f) -> dict:
 
 
 def read_station_data(f) -> pl.DataFrame:
+    """Read and parse observation data from a station CSV file.
+
+    Args:
+        f: A file-like object containing the CSV data.
+
+    Returns:
+        A Polars DataFrame with the parsed observation data.
+    """
     d = read_brazilian_csv(
         f,
         engine="polars",
@@ -159,6 +175,18 @@ def read_zipfile(
     start: str | None = None,
     end: str | None = None,
 ) -> pl.DataFrame:
+    """Read and parse all CSV files inside an INMET BDMEP ZIP archive.
+
+    Args:
+        filepath: The path to the ZIP archive.
+        uf: Optional list of UFs to filter stations by.
+        station: Optional list of WMO station codes to filter by.
+        start: Optional start datetime string (ISO format) to filter data.
+        end: Optional end datetime string (ISO format) to filter data.
+
+    Returns:
+        A Polars DataFrame containing the combined data from the ZIP archive.
+    """
     frames = []
     with zipfile.ZipFile(filepath) as z:
         files = [zf for zf in z.infolist() if not zf.is_dir()]
@@ -184,7 +212,15 @@ def read_zipfile(
 
 
 def find_zipfiles(data_dir: Path, years: list[int] | None = None) -> list[Path]:
-    """Locate INMET BDMEP ZIPs under ``bdmep/{year}/*.zip`` (Padrão B)."""
+    """Locate INMET BDMEP ZIPs under ``bdmep/{year}/*.zip`` (Padrão B).
+
+    Args:
+        data_dir: The root data directory.
+        years: Optional list of years to locate. If None, finds all years.
+
+    Returns:
+        A list of Path objects for the found ZIP files.
+    """
     repo = DataRepository(data_dir)
     zips: list[Path] = []
     if years:
@@ -208,6 +244,22 @@ def read(
     start: str | None = None,
     end: str | None = None,
 ) -> pl.DataFrame:
+    """Read and concatenate observation data from multiple INMET BDMEP ZIP archives.
+
+    Args:
+        data_dir: The root data directory containing the ZIP files.
+        years: Optional list of years to read.
+        uf: Optional list of UFs to filter stations by.
+        station: Optional list of WMO station codes to filter by.
+        start: Optional start datetime string (ISO format) to filter data.
+        end: Optional end datetime string (ISO format) to filter data.
+
+    Returns:
+        A Polars DataFrame containing the combined observation data.
+
+    Raises:
+        FileNotFoundError: If no ZIP files are found for the specified criteria.
+    """
     zips = find_zipfiles(data_dir, years)
     if not zips:
         raise FileNotFoundError(f"Nenhum ZIP encontrado em {data_dir}")
@@ -221,6 +273,18 @@ def read(
 
 
 def read_stations(data_dir: Path, years: list[int] | None = None) -> pl.DataFrame:
+    """Read and compile station metadata from INMET BDMEP ZIP archives.
+
+    Args:
+        data_dir: The root data directory containing the ZIP files.
+        years: Optional list of years to read.
+
+    Returns:
+        A Polars DataFrame containing unique station metadata.
+
+    Raises:
+        FileNotFoundError: If no ZIP files are found for the specified criteria.
+    """
     zips = find_zipfiles(data_dir, years)
     if not zips:
         raise FileNotFoundError(f"Nenhum ZIP encontrado em {data_dir}")
