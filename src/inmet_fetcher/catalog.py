@@ -16,7 +16,8 @@ def list_datasets(group: str | None = None) -> list[dict[str, Any]]:
     """List available INMET BDMEP datasets for download.
 
     Args:
-        group: Optional group name to filter. If provided and not 'bdmep', returns empty list.
+        group: Optional group name to filter. If provided and not 'bdmep',
+            returns empty list.
 
     Returns:
         List of dictionaries containing dataset metadata (id, group, year, url, ext).
