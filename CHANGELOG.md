@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1] - 2026-08-31
+### Corrigido
+- Quitação de dívida de lint (E501/docstrings longas) herdada dos sweeps de
+  documentação de 2026-08-14; nenhum comportamento alterado.
+
 ## [0.4.0] - 2026-08-07
 ### Alterado
 - Refatoração arquitetural: Remoção de dependências (`quantilica-cli` e `quantilica-catalog`) e limpeza de imports. Os fetchers agora são pacotes de extração puros, dependendo estritamente do `quantilica-core`.
